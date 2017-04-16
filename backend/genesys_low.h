@@ -325,7 +325,7 @@ Genesys_Color_Order;
 #define GENESYS_GL845	 845
 #define GENESYS_GL846	 846
 #define GENESYS_GL847	 847
-#define GENESYS_GL848	 848
+#define GENESYS_GL125	 125
 #define GENESYS_GL123	 123
 #define GENESYS_GL124	 124
 
@@ -353,6 +353,7 @@ Genesys_Color_Order;
 #define DAC_PLUSTEK3800    19
 #define DAC_CANONLIDE80    20
 #define DAC_CANONLIDE120   21
+#define DAC_HPSJ200        22
 
 #define CCD_UMAX         0
 #define CCD_ST12         1	/* SONY ILX548: 5340 Pixel  ??? */
@@ -385,6 +386,7 @@ Genesys_Color_Order;
 #define CIS_CANONLIDE80  28
 #define CIS_CANONLIDE220 29
 #define CIS_CANONLIDE120 30
+#define CIS_HPSJ200      31  
 
 #define GPO_UMAX         0
 #define GPO_ST12         1
@@ -412,6 +414,7 @@ Genesys_Color_Order;
 #define GPO_PLUSTEK3800  23
 #define GPO_CANONLIDE80  24
 #define GPO_CANONLIDE120 25
+#define GPO_HPSJ200      26  
 
 #define MOTOR_UMAX          0
 #define MOTOR_5345          1
@@ -438,7 +441,7 @@ Genesys_Color_Order;
 #define MOTOR_CANONLIDE210 23
 #define MOTOR_CANONLIDE80  24
 #define MOTOR_CANONLIDE120 25
-
+#define MOTOR_HPSJ200      26  
 
 /* Forward typedefs */
 typedef struct Genesys_Device Genesys_Device;
@@ -1240,6 +1243,8 @@ extern SANE_Status sanei_gl841_init_cmd_set (Genesys_Device * dev);
 extern SANE_Status sanei_gl843_init_cmd_set (Genesys_Device * dev);
 extern SANE_Status sanei_gl846_init_cmd_set (Genesys_Device * dev);
 extern SANE_Status sanei_gl847_init_cmd_set (Genesys_Device * dev);
+//extern SANE_Status sanei_gl848_init_cmd_set (Genesys_Device * dev);
 extern SANE_Status sanei_gl124_init_cmd_set (Genesys_Device * dev);
+extern SANE_Status sanei_gl125_init_cmd_set (Genesys_Device * dev);
 
 #endif /* not GENESYS_LOW_H */

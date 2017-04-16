@@ -71,6 +71,8 @@ sanei_genesys_init_cmd_set (Genesys_Device * dev)
       return sanei_gl846_init_cmd_set (dev);
     case GENESYS_GL847:
       return sanei_gl847_init_cmd_set (dev);
+    case GENESYS_GL125:
+      return sanei_gl125_init_cmd_set (dev);
     case GENESYS_GL124:
       return sanei_gl124_init_cmd_set (dev);
     default:
@@ -312,6 +314,7 @@ sanei_genesys_write_register (Genesys_Device * dev, uint16_t reg, uint8_t val)
   if(dev->model->asic_type==GENESYS_GL847
   || dev->model->asic_type==GENESYS_GL845
   || dev->model->asic_type==GENESYS_GL846
+  || dev->model->asic_type==GENESYS_GL125
   || dev->model->asic_type==GENESYS_GL124)
     {
       return sanei_genesys_write_gl847_register(dev, reg, val);
@@ -435,6 +438,7 @@ sanei_genesys_read_register (Genesys_Device * dev, uint16_t reg, uint8_t * val)
   if(dev->model->asic_type==GENESYS_GL847
   || dev->model->asic_type==GENESYS_GL845
   || dev->model->asic_type==GENESYS_GL846
+  || dev->model->asic_type==GENESYS_GL125
   || dev->model->asic_type==GENESYS_GL124)
     return sanei_genesys_read_gl847_register(dev, reg, val);
 
@@ -479,6 +483,7 @@ sanei_genesys_set_buffer_address (Genesys_Device * dev, uint32_t addr)
   if(dev->model->asic_type==GENESYS_GL847
   || dev->model->asic_type==GENESYS_GL845
   || dev->model->asic_type==GENESYS_GL846
+  || dev->model->asic_type==GENESYS_GL125
   || dev->model->asic_type==GENESYS_GL124)
     {
       DBG (DBG_warn,
@@ -587,7 +592,7 @@ sanei_genesys_fe_write_data (Genesys_Device * dev, uint8_t addr,
   reg[1].value = (data / 256) & 0xff;
   reg[2].address = 0x3b;
   reg[2].value = data & 0xff;
-  if (dev->model->asic_type == GENESYS_GL124)
+  if (dev->model->asic_type == GENESYS_GL124 || GENESYS_GL125)
     {
      reg[1].address = 0x5d;
      reg[2].address = 0x5e;
@@ -624,7 +629,7 @@ sanei_genesys_get_status (Genesys_Device * dev, uint8_t * status)
     }
 #endif
 
-  if(dev->model->asic_type==GENESYS_GL124)
+  if(dev->model->asic_type==GENESYS_GL124 || GENESYS_GL125)
     return sanei_genesys_read_hregister(dev, 0x101, status);
   return sanei_genesys_read_register (dev, 0x41, status);
 }
@@ -731,6 +736,17 @@ sanei_genesys_read_valid_words (Genesys_Device * dev, unsigned int *words)
       *words = *words * 256 + value;
       break;
 
+    case GENESYS_GL125:
+      RIE (sanei_genesys_read_hregister (dev, 0x102, &value));
+      *words = (value & 0x03);
+      RIE (sanei_genesys_read_hregister (dev, 0x103, &value));
+      *words = *words * 256 + value;
+      RIE (sanei_genesys_read_hregister (dev, 0x104, &value));
+      *words = *words * 256 + value;
+      RIE (sanei_genesys_read_hregister (dev, 0x105, &value));
+      *words = *words * 256 + value;
+      break;
+
     default:
       RIE (sanei_genesys_read_register (dev, 0x44, &value));
       *words = value;
@@ -759,7 +775,7 @@ sanei_genesys_read_scancnt (Genesys_Device * dev, unsigned int *words)
 
   DBG (DBG_proc, "sanei_genesys_read_scancnt: start\n");
 
-  if (dev->model->asic_type == GENESYS_GL124)
+  if (dev->model->asic_type == GENESYS_GL124 || GENESYS_GL125)
     {
       RIE (sanei_genesys_read_hregister (dev, 0x10b, &value));
       *words = (value & 0x0f) << 16;
@@ -1050,7 +1066,7 @@ sanei_genesys_read_feed_steps (Genesys_Device * dev, unsigned int *steps)
 
   DBG (DBG_proc, "sanei_genesys_read_feed_steps\n");
 
-  if (dev->model->asic_type == GENESYS_GL124)
+  if (dev->model->asic_type == GENESYS_GL124 || GENESYS_GL125)
     {
       RIE (sanei_genesys_read_hregister (dev, 0x108, &value));
       *steps = (value & 0x1f) << 16;

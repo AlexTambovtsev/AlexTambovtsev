@@ -3059,11 +3059,13 @@ genesys_send_shading_coefficient (Genesys_Device * dev)
     case CIS_CANONLIDE120:
     case CIS_CANONLIDE210:
     case CIS_CANONLIDE220:
+    case CIS_HPSJ200:
         /* TODO store this in a data struct so we avoid
          * growing this switch */
         if(dev->model->ccd_type!=CIS_CANONLIDE110
         && dev->model->ccd_type!=CIS_CANONLIDE210
         && dev->model->ccd_type!=CIS_CANONLIDE120
+        && dev->model->ccd_type!=CIS_HPSJ200
         && dev->model->ccd_type!=CIS_CANONLIDE220)
           target_code=0xdc00;
         else
@@ -5195,6 +5197,7 @@ calc_parameters (Genesys_Scanner * s)
       || s->dev->model->asic_type == GENESYS_GL124
       || s->dev->model->asic_type == GENESYS_GL845
       || s->dev->model->asic_type == GENESYS_GL846
+      || s->dev->model->asic_type == GENESYS_GL125
       || s->dev->model->asic_type == GENESYS_GL843)
     {
       if (s->dev->settings.xres <= 1200)
@@ -5208,6 +5211,7 @@ calc_parameters (Genesys_Scanner * s)
   if (s->dev->settings.xres >= 1200
       && (    s->dev->model->asic_type == GENESYS_GL124
            || s->dev->model->asic_type == GENESYS_GL847
+       || s->dev->model->asic_type == GENESYS_GL125
            || s->dev->current_setup.xres < s->dev->current_setup.yres
          )
      )
@@ -5876,7 +5880,7 @@ init_options (Genesys_Scanner * s)
   s->opt[OPT_COLOR_FILTER].type = SANE_TYPE_STRING;
   s->opt[OPT_COLOR_FILTER].constraint_type = SANE_CONSTRAINT_STRING_LIST;
   /* true gray not yet supported for GL847 and GL124 scanners */
-  if(!model->is_cis || model->asic_type==GENESYS_GL847 || model->asic_type==GENESYS_GL124)
+  if(!model->is_cis || model->asic_type==GENESYS_GL847 || model->asic_type==GENESYS_GL124 || model->asic_type==GENESYS_GL125)
     {
       s->opt[OPT_COLOR_FILTER].size = max_string_size (color_filter_list);
       s->opt[OPT_COLOR_FILTER].constraint.string_list = color_filter_list;
@@ -6207,8 +6211,15 @@ attach (SANE_String_Const devname, Genesys_Device ** devp, SANE_Bool may_wait)
         }
     }
 
+  i=0;
+  DBG (DBG_info,
+       "attach: genesys_usb_device_list vendor %d product %d\n",
+       vendor, product);
   for (i = 0; i < MAX_SCANNERS && genesys_usb_device_list[i].model != 0; i++)
     {
+      DBG (DBG_info,
+           "attach: genesys_usb_device_list vendor %d product %d\n",
+           vendor, product);
       if (vendor == genesys_usb_device_list[i].vendor &&
 	  product == genesys_usb_device_list[i].product)
 	{
@@ -6216,7 +6227,7 @@ attach (SANE_String_Const devname, Genesys_Device ** devp, SANE_Bool may_wait)
 	  if (!dev)
 	    return SANE_STATUS_NO_MEM;
 	  break;
-	}
+     }
     }
 
   if (!dev)
@@ -7036,9 +7047,7 @@ sane_close (SANE_Handle handle)
   FREE_IFNOT_NULL (s->dev->sensor.gamma_table[1]);
   FREE_IFNOT_NULL (s->dev->sensor.gamma_table[2]);
 
-  s->dev->already_initialized = SANE_FALSE;
-
-   /* for an handful of bytes .. */
+  /* for an handful of bytes .. */
   free ((void *)(size_t)s->opt[OPT_RESOLUTION].constraint.word_list);
   free (s->val[OPT_SOURCE].s);
   free (s->val[OPT_MODE].s);

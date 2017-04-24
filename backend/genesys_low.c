@@ -1286,6 +1286,65 @@ SANE_Status sanei_genesys_generate_gamma_buffer(Genesys_Device * dev,
   return SANE_STATUS_GOOD;
 }
 
+SANE_Status
+sanei_genesys_send_gamma_table (Genesys_Device * dev)
+{
+    DBG(DBG_info, "start hpsj200_write_gamma_table\n");
+    SANE_Status status;
+    FILE *data_file;
+    DBG(DBG_info, "FILE *data_file\n;");
+    long int size;
+    DBG(DBG_info, "long int size;\n");
+    uint8_t *table;
+    DBG(DBG_info, "uint8_t *table;\n");
+    char * filename;
+    char filePath[100];
+    int index=0, addr, i=0;
+    filename = "/home/tambovtsev/work/wireshark/win_gamma/gamma_";
+    for (i=0; i<2; i++)
+    {
+        //printf("table init");
+        DBG(DBG_info, "for i = %d\n", i);
+        snprintf(filePath, (int)strlen(filename) + 2, "%s%d%s", filename, i);
+        DBG(DBG_info, "filePath = '%s'\n", filePath);
+        data_file = fopen(filePath, "r");
+        DBG(DBG_info, "errno = %d\n", errno);
+        DBG(DBG_info, "The error is - %s\n", strerror(errno));
+        if (data_file == NULL);
+        {
+            DBG(DBG_info, "Can not open file: gamma_%d\n", i);
+            status = SANE_STATUS_ACCESS_DENIED;
+            return status;
+        }
+        fseek(data_file, 0, SEEK_END);
+        DBG(DBG_info, "fseek(data_file, 0, SEEK_END)\n");
+        size = ftell(data_file);
+        DBG(DBG_info, "size=%d\n", size);
+        fseek(data_file, 0, SEEK_SET);
+        DBG(DBG_info, "fseek(data_file, 0, SEEK_SET)\n");
+        //table = (uint8_t *) malloc (size+1);
+        while (!feof(data_file))
+        {
+            table[index] = fgetc(data_file);
+            //printf("02d : 02X\n", index, table[index]);
+            index++;
+        }
+        addr = 0x01000000 + 0x200 * (i+1);
+        status=sanei_genesys_write_ahb (dev->dn, dev->usb_mode, addr, size, table);
+        fclose(data_file);
+        free(table);
+        //  table_nr++;
+        if (status != SANE_STATUS_GOOD)
+        {
+            DBG (DBG_error,
+                        "%s: write to AHB failed writing of the file with SLOPE bin %d (%s)\n");
+        }
+    };
+    DBGCOMPLETED;
+    return status;
+
+}
+
 
 /** @brief send gamma table to scanner
  * This function sends generic gamma table (ie ones built with
@@ -1293,7 +1352,7 @@ SANE_Status sanei_genesys_generate_gamma_buffer(Genesys_Device * dev,
  * fontend. Used by gl846+ ASICs
  * @param dev device to write to
  */
-SANE_Status
+/*SANE_Status
 sanei_genesys_send_gamma_table (Genesys_Device * dev)
 {
   int size;
@@ -1306,7 +1365,7 @@ sanei_genesys_send_gamma_table (Genesys_Device * dev)
   size = 256 + 1;
 
   /* allocate temporary gamma tables: 16 bits words, 3 channels */
-  gamma = (uint8_t *) malloc (size * 2 * 3);
+/*  gamma = (uint8_t *) malloc (size * 2 * 3);
   if (!gamma)
     {
       return SANE_STATUS_NO_MEM;
@@ -1316,20 +1375,20 @@ sanei_genesys_send_gamma_table (Genesys_Device * dev)
   RIE(sanei_genesys_generate_gamma_buffer(dev, 16, 65535, size, gamma));
 
   /* loop sending gamma tables NOTE: 0x01000000 not 0x10000000 */
-  for (i = 0; i < 3; i++)
+/*  for (i = 0; i < 3; i++)
     {
       /* clear corresponding GMM_N bit */
-      RIEF (sanei_genesys_read_register (dev, 0xbd, &val), gamma);
+/*      RIEF (sanei_genesys_read_register (dev, 0xbd, &val), gamma);
       val &= ~(0x01 << i);
       RIEF (sanei_genesys_write_register (dev, 0xbd, val), gamma);
 
       /* clear corresponding GMM_F bit */
-      RIEF (sanei_genesys_read_register (dev, 0xbe, &val), gamma);
+/*      RIEF (sanei_genesys_read_register (dev, 0xbe, &val), gamma);
       val &= ~(0x01 << i);
       RIEF (sanei_genesys_write_register (dev, 0xbe, val), gamma);
 
       /* set GMM_Z */
-      RIEF (sanei_genesys_write_register (dev, 0xc5+2*i, gamma[size*2*i+1]), gamma);
+/*      RIEF (sanei_genesys_write_register (dev, 0xc5+2*i, gamma[size*2*i+1]), gamma);
       RIEF (sanei_genesys_write_register (dev, 0xc6+2*i, gamma[size*2*i]), gamma);
 
       status = sanei_genesys_write_ahb (dev->dn, dev->usb_mode, 0x01000000 + 0x200 * i, (size-1) * 2, gamma + i * size * 2+2);
@@ -1345,7 +1404,7 @@ sanei_genesys_send_gamma_table (Genesys_Device * dev)
   free (gamma);
   DBGCOMPLETED;
   return status;
-}
+}*/
 
 /** @brief initialize device
  * Initialize backend and ASIC : registers, motor tables, and gamma tables

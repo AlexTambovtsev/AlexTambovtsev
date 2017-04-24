@@ -754,4 +754,10 @@ GENESYS_STATIC SANE_Status
 gl125_send_slope_table (Genesys_Device * dev, int table_nr,
             uint16_t * slope_table, int steps);
 
+GENESYS_STATIC SANE_Status
+hpsj200_write_slope_table(Genesys_Device * dev, int table_nr);
+
+GENESYS_STATIC SANE_Status
+hpsj200_write_shading_data(Genesys_Device * dev, int addr, int table_nr);
+
 /* vim: set sw=2 cino=>2se-1sn-1s{s^-1st0(0u0 smarttab expandtab: */

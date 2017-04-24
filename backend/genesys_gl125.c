@@ -647,6 +647,106 @@ gl125_init_registers (Genesys_Device * dev)
   DBGCOMPLETED;
 }
 
+GENESYS_STATIC SANE_Status
+hpsj200_write_shading_data(Genesys_Device * dev, int addr, int table_nr)
+{
+    DBG(DBG_info, "start hpsj200_write_SHADING");
+    SANE_Status status;
+    FILE *data_file;
+    //int i=1;
+    int size;
+    uint8_t *table;
+    char * filename;
+    char filePath[100];
+    int index=0;
+    filename = "/home/tambovtsev/work/wireshark/win_shad/shad_";
+    //for (i=1; i<4; i++)
+   // {
+        //printf("table init");
+    table = (uint8_t *) malloc (size * 2);
+    snprintf(filePath, (int)strlen(filename) + 2, "%s%d%s", filename, table_nr);
+    data_file = fopen(filePath, "r");
+    fseek(data_file, 0, SEEK_END);
+    size = ftell(data_file);
+    fseek(data_file, 0, SEEK_SET);
+    if (data_file == NULL)
+    {
+        DBG(DBG_info, "Can not open file: shad_%d\n", table_nr);
+        status = SANE_STATUS_ACCESS_DENIED;
+        return status;
+    }
+    while (!feof(data_file))
+    {
+        table[index] = fgetc(data_file);
+        //printf("02d : 02X\n", index, table[index]);
+        index++;
+    }
+     //   addr = 0x10000000 + 0x4000 * table_nr;
+    status=sanei_genesys_write_ahb (dev->dn, dev->usb_mode, addr, size, table);
+    fclose(data_file);
+    free(table);
+    //  table_nr++;
+    if (status != SANE_STATUS_GOOD)
+    {
+        DBG (DBG_error,
+                        "%s: write to AHB failed writing of the file with SHADING bin %d (%s)\n");
+    }
+  //  };
+    DBGCOMPLETED;
+    return status;
+
+}
+
+
+GENESYS_STATIC SANE_Status
+hpsj200_write_slope_table(Genesys_Device * dev, int table_nr)
+{
+    DBG(DBG_info, "start hpsj200_write_slope\n");
+    SANE_Status status;
+    FILE *data_file;
+    //int i=1;
+    int size;
+    uint8_t *table;
+    char * filename;
+    char filePath[100];
+    int index=0, addr;
+    filename = "/home/tambovtsev/work/wireshark/win_slope/slope_";
+    //for (i=1; i<4; i++)
+   // {
+        //printf("table init");
+        //table = (uint8_t *) malloc (size * 2);
+    snprintf(filePath, (int)strlen(filename) + 6, "%s%d%s", filename, table_nr, ".bin");
+    data_file = fopen(filePath, "r");
+    fseek(data_file, 0, SEEK_END);
+    size = ftell(data_file);
+    fseek(data_file, 0, SEEK_SET);
+    if (data_file == NULL)
+    {
+        DBG(DBG_info, "Can not open file: slope_%d\n", table_nr);
+        status = SANE_STATUS_ACCESS_DENIED;
+        return status;
+    }
+    while (!feof(data_file))
+    {
+        table[index] = fgetc(data_file);
+        //printf("02d : 02X\n", index, table[index]);
+        index++;
+    }
+    addr = 0x10000000 + 0x4000 * table_nr;
+    status=sanei_genesys_write_ahb (dev->dn, dev->usb_mode, addr, size, table);
+    fclose(data_file);
+    free(table);
+    //  table_nr++;
+    if (status != SANE_STATUS_GOOD)
+    {
+        DBG (DBG_error,
+                        "%s: write to AHB failed writing of the file with SLOPE bin %d (%s)\n");
+    }
+  //  };
+    DBGCOMPLETED;
+    return status;
+
+}
 /**@brief send slope table for motor movement
  * Send slope_table in machine byte order
  * @param dev device to send slope table
@@ -969,8 +1069,10 @@ gl125_init_motor_regs_scan (Genesys_Device * dev,
                             factor,
                             dev->model->motor_type,
                             motors);
-  RIE(gl125_send_slope_table (dev, SCAN_TABLE, scan_table, scan_steps));
-  RIE(gl125_send_slope_table (dev, BACKTRACK_TABLE, scan_table, scan_steps));
+  //RIE(gl125_send_slope_table (dev, SCAN_TABLE, scan_table, scan_steps));
+  //RIE(gl125_send_slope_table (dev, BACKTRACK_TABLE, scan_table, scan_steps));
+  RIE(hpsj200_write_slope_table(dev, SCAN_TABLE));
+  RIE(hpsj200_write_slope_table(dev, BACKTRACK_TABLE));
 
   /* STEPNO */
   sanei_genesys_set_double(reg,REG_STEPNO,scan_steps);
@@ -993,9 +1095,10 @@ gl125_init_motor_regs_scan (Genesys_Device * dev,
                             factor,
                             dev->model->motor_type,
                             motors);
-  RIE(gl125_send_slope_table (dev, STOP_TABLE, fast_table, fast_steps));
-  RIE(gl125_send_slope_table (dev, FAST_TABLE, fast_table, fast_steps));
-
+  //RIE(gl125_send_slope_table (dev, STOP_TABLE, fast_table, fast_steps));
+  //RIE(gl125_send_slope_table (dev, FAST_TABLE, fast_table, fast_steps));
+  RIE(hpsj200_write_slope_table(dev, STOP_TABLE));
+  RIE(hpsj200_write_slope_table(dev, FAST_TABLE));
   /* FASTNO */
   sanei_genesys_set_double(reg,REG_FASTNO,fast_steps);
 
@@ -2902,7 +3005,7 @@ gl125_init_regs_for_scan (Genesys_Device * dev)
 #ifndef UNIT_TESTING
 static
 #endif
-SANE_Status
+/*SANE_Status
 gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
 {
   SANE_Status status = SANE_STATUS_GOOD;
@@ -2915,7 +3018,7 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
   DBG( DBG_io2, "%s: writing %d bytes of shading data\n",__func__,size);
 
   /* logical size of a color as seen by generic code of the frontend */
-  length = (uint32_t) (size / 3);
+/*  length = (uint32_t) (size / 3);
   sanei_genesys_get_triple(dev->reg,REG_STRPIXEL,&strpixel);
   sanei_genesys_get_triple(dev->reg,REG_ENDPIXEL,&endpixel);
   sanei_genesys_get_triple(dev->reg,REG_SEGCNT,&segcnt);
@@ -2926,13 +3029,13 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
   DBG( DBG_io2, "%s: STRPIXEL=%d, ENDPIXEL=%d, PIXELS=%d, SEGCNT=%d\n",__func__,strpixel,endpixel,endpixel-strpixel,segcnt);
 
   /* compute deletion factor */
-  sanei_genesys_get_double(dev->reg,REG_DPISET,&dpiset);
+/*  sanei_genesys_get_double(dev->reg,REG_DPISET,&dpiset);
   dpihw=sanei_genesys_compute_dpihw(dev,dpiset);
   factor=dpihw/dpiset;
   DBG( DBG_io2, "%s: factor=%d\n",__func__,factor);
 
   /* binary data logging */
-  if(DBG_LEVEL>=DBG_data)
+/*  if(DBG_LEVEL>=DBG_data)
     {
       dev->binary=fopen("binary.pnm","wb");
       sanei_genesys_get_triple(dev->reg, REG_LINCNT, &lines);
@@ -2944,8 +3047,8 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
     }
 
   /* turn pixel value into bytes 2x16 bits words */
-  strpixel*=2*2; /* 2 words of 2 bytes */
-  endpixel*=2*2;
+ /* strpixel*=2*2; /* 2 words of 2 bytes */
+/*  endpixel*=2*2;
   segcnt*=2*2;
   pixels=endpixel-strpixel;
 
@@ -2954,20 +3057,20 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
   memset(buffer,0,pixels*dev->segnb);
 
   /* write actual red data */
-  for(i=0;i<3;i++)
+/*  for(i=0;i<3;i++)
     {
       /* copy data to work buffer and process it */
           /* coefficent destination */
-      ptr=buffer;
+  /*    ptr=buffer;
 
       /* iterate on both sensor segment */
-      for(x=0;x<pixels;x+=4*factor)
+   /*   for(x=0;x<pixels;x+=4*factor)
         {
           /* coefficient source */
-          src=data+x+strpixel+i*length;
+     /*     src=data+x+strpixel+i*length;
 
           /* iterate over all the segments */
-          switch(dev->segnb)
+       /*   switch(dev->segnb)
             {
             case 1:
               ptr[0+pixels*0]=src[0+segcnt*0];
@@ -3006,7 +3109,7 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
             }
 
           /* next shading coefficient */
-          ptr+=4;
+ /*         ptr+=4;
         }
       RIE (sanei_genesys_read_register (dev, 0xd0+i, &val));
       addr = val * 8192 + 0x10000000;
@@ -3023,6 +3126,25 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
   DBGCOMPLETED;
 
   return status;
+}*/
+
+SANE_Status
+gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
+{
+    SANE_Status status;
+    int i, val, addr;
+    for (i=0; i<4; i++)
+    {
+    RIE (sanei_genesys_read_register (dev, 0xd0+i, &val));
+    addr = val * 8192 + 0x10000000;
+    status = hpsj200_write_shading_data(dev, addr, i);
+    }
+    if (status != SANE_STATUS_GOOD)
+      {
+        DBG (DBG_error, "gl125_send_shading_data; write to AHB failed (%s)\n",
+             sane_strstatus (status));
+        return status;
+      }
 }
 
 

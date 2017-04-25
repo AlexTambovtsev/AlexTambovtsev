@@ -650,7 +650,7 @@ gl125_init_registers (Genesys_Device * dev)
 GENESYS_STATIC SANE_Status
 hpsj200_write_shading_data(Genesys_Device * dev, int addr, int table_nr)
 {
-    DBG(DBG_info, "start hpsj200_write_SHADING");
+    DBG(DBG_info, "start hpsj200_write_SHADING\n");
     SANE_Status status;
     FILE *data_file;
     //int i=1;
@@ -658,7 +658,7 @@ hpsj200_write_shading_data(Genesys_Device * dev, int addr, int table_nr)
     uint8_t *table;
     char * filename;
     char filePath[100];
-    int index=0;
+    int index;
     filename = "/home/tambovtsev/work/wireshark/win_shad/shad_";
     //for (i=1; i<4; i++)
    // {
@@ -675,6 +675,8 @@ hpsj200_write_shading_data(Genesys_Device * dev, int addr, int table_nr)
         status = SANE_STATUS_ACCESS_DENIED;
         return status;
     }
+    table = (uint8_t *) malloc (size*2);
+    index=0;
     while (!feof(data_file))
     {
         table[index] = fgetc(data_file);
@@ -709,7 +711,7 @@ hpsj200_write_slope_table(Genesys_Device * dev, int table_nr)
     uint8_t *table;
     char * filename;
     char filePath[100];
-    int index=0, addr;
+    int index, addr;
     filename = "/home/tambovtsev/work/wireshark/win_slope/slope_";
     //for (i=1; i<4; i++)
    // {
@@ -719,13 +721,15 @@ hpsj200_write_slope_table(Genesys_Device * dev, int table_nr)
     data_file = fopen(filePath, "r");
     fseek(data_file, 0, SEEK_END);
     size = ftell(data_file);
-    fseek(data_file, 0, SEEK_SET);
+    fseek(data_file, 1, SEEK_SET);
     if (data_file == NULL)
     {
         DBG(DBG_info, "Can not open file: slope_%d\n", table_nr);
         status = SANE_STATUS_ACCESS_DENIED;
         return status;
     }
+    table = (uint8_t *) malloc (size*2);
+    index=0;
     while (!feof(data_file))
     {
         table[index] = fgetc(data_file);

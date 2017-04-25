@@ -1299,18 +1299,20 @@ sanei_genesys_send_gamma_table (Genesys_Device * dev)
     DBG(DBG_info, "uint8_t *table;\n");
     char * filename;
     char filePath[100];
-    int index=0, addr, i=0;
-    filename = "/home/tambovtsev/work/wireshark/win_gamma/gamma_";
-    for (i=0; i<2; i++)
+    int index, addr, i=0;
+    filename = "/home/tambovtsev/work/wireshark/win_ga/gamma_";
+    for (i=0; i<3; i++)
     {
         //printf("table init");
         DBG(DBG_info, "for i = %d\n", i);
-        snprintf(filePath, (int)strlen(filename) + 2, "%s%d%s", filename, i);
+        snprintf(filePath, (int)strlen(filename) + 6, "%s%d%s", filename, i, ".bin");
         DBG(DBG_info, "filePath = '%s'\n", filePath);
         data_file = fopen(filePath, "r");
-        DBG(DBG_info, "errno = %d\n", errno);
-        DBG(DBG_info, "The error is - %s\n", strerror(errno));
-        if (data_file == NULL);
+       // data_file = fopen(filename, "r");
+        DBG(DBG_info, "data file = %d\n", data_file);
+        //DBG(DBG_info, "errno = %d\n", errno);
+        //DBG(DBG_info, "The error is - %s\n", strerror(errno));
+        if (data_file == NULL)
         {
             DBG(DBG_info, "Can not open file: gamma_%d\n", i);
             status = SANE_STATUS_ACCESS_DENIED;
@@ -1320,16 +1322,21 @@ sanei_genesys_send_gamma_table (Genesys_Device * dev)
         DBG(DBG_info, "fseek(data_file, 0, SEEK_END)\n");
         size = ftell(data_file);
         DBG(DBG_info, "size=%d\n", size);
-        fseek(data_file, 0, SEEK_SET);
+        fseek(data_file, 1, SEEK_SET);
         DBG(DBG_info, "fseek(data_file, 0, SEEK_SET)\n");
-        //table = (uint8_t *) malloc (size+1);
+        table = (uint8_t *) malloc (size*2);
+        index=0;
         while (!feof(data_file))
         {
+
+            //DBG(DBG_info, "while (!feof(data_file))");
             table[index] = fgetc(data_file);
+            //DBG(DBG_info, "table[index] = fgetc(data_file);");
             //printf("02d : 02X\n", index, table[index]);
             index++;
+            //DBG(DBG_info, "index++");
         }
-        addr = 0x01000000 + 0x200 * (i+1);
+        addr = 0x01000000 + 0x200 * i;
         status=sanei_genesys_write_ahb (dev->dn, dev->usb_mode, addr, size, table);
         fclose(data_file);
         free(table);

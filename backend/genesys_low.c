@@ -1300,7 +1300,7 @@ sanei_genesys_send_gamma_table (Genesys_Device * dev)
     char * filename;
     char filePath[100];
     int index, addr, i=0;
-    filename = "/home/tambovtsev/work/wireshark/win_ga/gamma_";
+    filename = "/home/tambovtsev/work/git_2/sane-backends/wireshark/win_ga/gamma_";
     for (i=0; i<3; i++)
     {
         //printf("table init");

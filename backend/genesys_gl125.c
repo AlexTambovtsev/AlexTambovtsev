@@ -46,6 +46,7 @@
 #define BACKEND_NAME genesys_gl125
 
 #include "genesys_gl125.h"
+#include "control_sj200.h"
 
 /****************************************************************************
  Low level function
@@ -659,7 +660,7 @@ hpsj200_write_shading_data(Genesys_Device * dev, int addr, int table_nr)
     char * filename;
     char filePath[100];
     int index;
-    filename = "/home/tambovtsev/work/wireshark/win_shad/shad_";
+    filename = "/home/tambovtsev/work/git_2/sane-backends/wireshark/win_shad/shad_";
     //for (i=1; i<4; i++)
    // {
         //printf("table init");
@@ -712,7 +713,7 @@ hpsj200_write_slope_table(Genesys_Device * dev, int table_nr)
     char * filename;
     char filePath[100];
     int index, addr;
-    filename = "/home/tambovtsev/work/wireshark/win_slope/slope_";
+    filename = "/home/tambovtsev/work/git_2/sane-backends/wireshark/win_slope/slope_";
     //for (i=1; i<4; i++)
    // {
         //printf("table init");
@@ -721,7 +722,7 @@ hpsj200_write_slope_table(Genesys_Device * dev, int table_nr)
     data_file = fopen(filePath, "r");
     fseek(data_file, 0, SEEK_END);
     size = ftell(data_file);
-    fseek(data_file, 1, SEEK_SET);
+    fseek(data_file, 0, SEEK_SET);
     if (data_file == NULL)
     {
         DBG(DBG_info, "Can not open file: slope_%d\n", table_nr);
@@ -2606,7 +2607,7 @@ gl125_search_start_position (Genesys_Device * dev)
   int dpi = 300;
 
   DBGSTART;
-
+  DBG(DBG_info, "gl125_search_start_position");
   memcpy (local_reg, dev->reg,
       GENESYS_GL125_MAX_REGS * sizeof (Genesys_Register_Set));
 
@@ -2792,7 +2793,7 @@ gl125_init_regs_for_shading (Genesys_Device * dev)
   int move, resolution, dpihw, factor;
 
   DBGSTART;
-
+  DBG(DBG_info, "gl125_init_regs_for_shading\n");
   /* initial calibration reg values */
   memcpy (dev->calib_reg, dev->reg, GENESYS_GL125_MAX_REGS * sizeof (Genesys_Register_Set));
 
@@ -3151,6 +3152,59 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
       }
 }
 
+SANE_Status
+probe_scan(Genesys_Device * dev)
+{
+  Genesys_Register_Set * reg;
+  int Ne_elems;
+  int i=0, j=0, k=0;
+  SANE_Byte outdata[100];
+  uint8_t *buf;
+  unsigned char *pkt;
+  unsigned char name = "pkt",
+                index = "_1";
+  DBGSTART;
+  for (i=2; i<196; i++)
+  {
+    DBG(DBG_info, "i = %d\n", i);
+      //buf = int(pkt196);
+   // pkt = name+(unsigned char)i+index;
+    snprintf(pkt, (int)strlen(name) + 6, "%s%d%s", name, i, index);
+    DBG(DBG_info, "pkt = %c\n", pkt);
+    Ne_elems=sizeof(pkt)/sizeof(pkt[0]);
+    DBG(DBG_info, "pkt = %d\n", pkt);
+    DBG(DBG_info, "Ne_elems = %d\n", Ne_elems);
+    puts(pkt);
+    for (k=0; k<Ne_elems; k++)
+    {
+        DBG(DBG_info, "k = %d\n", k);
+        DBG(DBG_info, "pkt[%d] = %c\n", k, pkt[k]);
+    }
+    DBG(DBG_info, "Ne_elems = %d\n", Ne_elems);
+    if (Ne_elems == 9)
+    {
+        DBG(DBG_info, "if (Ne_elems = 9)\n");
+        buf[0] = (int)pkt196_1[8];
+        buf[1] = (int)pkt196_1[9];
+        sanei_genesys_write_register(dev, buf[0], buf[1]);
+        DBG(DBG_info, "buf[0] = 0x%02x\n buf[1] = %d\n");
+    }
+    else
+    {
+        for (j=0; j<Ne_elems-7; j++)
+        {
+            DBG(DBG_info, "j = %d\n", j);
+            outdata[j]=pkt196[7+j];
+            DBG(DBG_info, "outdata[%d] = c%", j, outdata[j]);
+            DBG(DBG_info, "pkt196_1[%d] = 0x%02x\n", 7+j, outdata[j]);
+        }
+        sanei_usb_control_msg(dev->dn, REQUEST_TYPE_OUT, REQUEST_BUFFER,
+                              VALUE_BUFFER, 0x01, Ne_elems-7, outdata);
+    }
+  }
+  printf("Kolichestvo elementov = %d\n", Ne_elems);
+  DBGCOMPLETED;
+}
 
 /** @brief move to calibration area
  * This functions moves scanning head to calibration area
@@ -3167,7 +3221,6 @@ move_to_calibration_area (Genesys_Device * dev)
   SANE_Status status = SANE_STATUS_GOOD;
 
   DBGSTART;
-
   pixels = (dev->sensor.sensor_pixels*600)/dev->sensor.optical_res;
 
   /* initial calibration reg values */
@@ -3253,7 +3306,6 @@ gl125_led_calibration (Genesys_Device * dev)
 
   /* move to calibration area */
   move_to_calibration_area(dev);
-
   /* offset calibration is always done in 16 bit depth color mode */
   channels = 3;
   depth=16;
@@ -3788,6 +3840,7 @@ gl125_init_regs_for_warmup (Genesys_Device * dev,
   SANE_Status status = SANE_STATUS_GOOD;
 
   DBGSTART;
+  DBG(DBG_info, "gl125_init_regs_for_warmup");
   if (dev == NULL || reg == NULL || channels == NULL || total_size == NULL)
     return SANE_STATUS_INVAL;
 
@@ -3974,7 +4027,7 @@ gl125_boot (Genesys_Device * dev, SANE_Bool cold)
   uint8_t val;
 
   DBGSTART;
-
+  DBG(DBG_info, "gl125_boot");
   /* reset ASIC in case of cold boot */
   if(cold)
     {
@@ -3983,6 +4036,8 @@ gl125_boot (Genesys_Device * dev, SANE_Bool cold)
     }
 
   /* enable GPOE 17 */
+
+  probe_scan(dev);
   RIE (sanei_genesys_write_register (dev, 0x36, 0x01));
 
   /* set GPIO 17 */

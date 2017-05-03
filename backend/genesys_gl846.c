@@ -3695,6 +3695,7 @@ static Genesys_Command_Set gl846_cmd_set = {
 
   sanei_genesys_is_compatible_calibration,
   NULL,
+  NULL,
   gl846_send_shading_data,
   gl846_calculate_current_setup,
   gl846_boot,

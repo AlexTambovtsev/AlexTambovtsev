@@ -1,3 +1,4 @@
+*.autosave
 *-s.c
 *.conf
 dll-preload.c

@@ -5786,6 +5786,7 @@ static Genesys_Command_Set gl646_cmd_set = {
   NULL,
   NULL,
   NULL,
+  NULL,
   NULL
 };
 

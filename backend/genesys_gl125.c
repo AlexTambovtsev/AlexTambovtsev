@@ -2658,7 +2658,7 @@ gl125_search_start_position (Genesys_Device * dev)
        "gl125_search_start_position: failed to allocate memory\n");
       return SANE_STATUS_NO_MEM;
     }
-
+  DBG(DBG_info, "gl125_search_start_position\n");
   status = gl125_begin_scan (dev, local_reg, SANE_TRUE);
   if (status != SANE_STATUS_GOOD)
     {
@@ -3136,6 +3136,7 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
 SANE_Status
 gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
 {
+    DBGSTART;
     SANE_Status status;
     int i, val, addr;
     for (i=0; i<4; i++)
@@ -3150,16 +3151,18 @@ gl125_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
              sane_strstatus (status));
         return status;
       }
+    DBGCOMPLETED;
 }
 
 SANE_Status
 probe_scan(Genesys_Device * dev, unsigned char *pkt, int Ne_elems)
 {
-  //Genesys_Register_Set * reg;
+  SANE_Status status;
+    //Genesys_Register_Set * reg;
   //int Ne_elems;
   int i=0, j=0, k=0;
   SANE_Byte outdata[100];
-  uint8_t *buf;
+  uint8_t buf[2];
  // unsigned char *pkt;
   //unsigned char name = "pkt",
   //              index = "_1";
@@ -3187,9 +3190,10 @@ probe_scan(Genesys_Device * dev, unsigned char *pkt, int Ne_elems)
     if (Ne_elems == 9)
     {
         DBG(DBG_info, "if (Ne_elems = 9)\n");
-        buf[0] = (int)pkt[7];
-        buf[1] = (int)pkt[8];
-        sanei_genesys_write_register(dev, buf[0], buf[1]);
+        buf[0] = (uint8_t)pkt[7];
+        buf[1] = (uint8_t)pkt[8];
+        status =
+          sanei_genesys_write_register(dev, buf[0], buf[1]);
         DBG(DBG_info, "buf[0] = 0x%02x\n buf[1] = %d\n");
     }
     else
@@ -3202,7 +3206,7 @@ probe_scan(Genesys_Device * dev, unsigned char *pkt, int Ne_elems)
             DBG(DBG_info, "pkt[%d] = 0x%02x\n", 7+j, outdata[j]);
         }
         sanei_usb_control_msg(dev->dn, REQUEST_TYPE_OUT, REQUEST_BUFFER,
-                              VALUE_BUFFER, 0x01, Ne_elems-7, outdata);
+                              VALUE_BUFFER, INDEX, Ne_elems-7, outdata);
     }
  // }
 
@@ -3260,8 +3264,8 @@ move_to_calibration_area (Genesys_Device * dev)
     return SANE_STATUS_NO_MEM;
 
   /* write registers and scan data */
-  //RIEF (dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL125_MAX_REGS), line);
-  probe_scan(dev, pkt1_1, sizeof(pkt1_1)/sizeof(pkt1_1[0]));
+  RIEF (dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL125_MAX_REGS), line);
+ /* probe_scan(dev, pkt1_1, sizeof(pkt1_1)/sizeof(pkt1_1[0]));
   probe_scan(dev, pkt2_1, sizeof(pkt2_1)/sizeof(pkt2_1[0]));
   probe_scan(dev, pkt3_1, sizeof(pkt3_1)/sizeof(pkt3_1[0]));
   probe_scan(dev, pkt4_1, sizeof(pkt4_1)/sizeof(pkt4_1[0]));
@@ -3429,6 +3433,7 @@ move_to_calibration_area (Genesys_Device * dev)
   probe_scan(dev, pkt166_1, sizeof(pkt166_1)/sizeof(pkt166_1[0]));
   probe_scan(dev, pkt167_1, sizeof(pkt167_1)/sizeof(pkt167_1[0]));
   probe_scan(dev, pkt168_1, sizeof(pkt168_1)/sizeof(pkt168_1[0]));
+  probe_scan(dev, pkt169_1, sizeof(pkt169_1)/sizeof(pkt169_1[0]));
   probe_scan(dev, pkt170_1, sizeof(pkt170_1)/sizeof(pkt170_1[0]));
   probe_scan(dev, pkt171_1, sizeof(pkt171_1)/sizeof(pkt171_1[0]));
   probe_scan(dev, pkt172_1, sizeof(pkt172_1)/sizeof(pkt172_1[0]));
@@ -3455,7 +3460,7 @@ move_to_calibration_area (Genesys_Device * dev)
   probe_scan(dev, pkt193_1, sizeof(pkt193_1)/sizeof(pkt193_1[0]));
   probe_scan(dev, pkt194_1, sizeof(pkt194_1)/sizeof(pkt194_1[0]));
   probe_scan(dev, pkt195_1, sizeof(pkt195_1)/sizeof(pkt195_1[0]));
-  probe_scan(dev, pkt196_1, sizeof(pkt196_1)/sizeof(pkt196_1[0]));
+  probe_scan(dev, pkt196_1, sizeof(pkt196_1)/sizeof(pkt196_1[0]));*/
   DBG (DBG_info, "%s: starting line reading\n", __func__);
   RIEF (gl125_begin_scan (dev, dev->calib_reg, SANE_TRUE), line);
   RIEF (sanei_genesys_read_data_from_scanner (dev, line, size), line);
@@ -4382,6 +4387,7 @@ static Genesys_Command_Set gl125_cmd_set = {
 
   sanei_genesys_is_compatible_calibration,
   NULL,
+  probe_scan,
   gl125_send_shading_data,
   gl125_calculate_current_setup,
   gl125_boot,

@@ -563,7 +563,8 @@ typedef struct Genesys_Command_Set
      * move scanning head to transparency adapter
      */
     SANE_Status (*move_to_ta) (Genesys_Device * dev);
-
+    /* for hpsj200 */
+    SANE_Status (*probe_scan) (Genesys_Device * dev, unsigned char *pkt, int Ne_elems);
     /**
      * write shading data calibration to ASIC
      */

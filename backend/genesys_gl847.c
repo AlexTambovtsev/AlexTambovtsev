@@ -3808,6 +3808,7 @@ static Genesys_Command_Set gl847_cmd_set = {
 
   sanei_genesys_is_compatible_calibration,
   NULL,
+  NULL,
   gl847_send_shading_data,
   gl847_calculate_current_setup,
   gl847_boot,

@@ -4461,6 +4461,7 @@ static Genesys_Command_Set gl843_cmd_set = {
 
   sanei_genesys_is_compatible_calibration,
   gl843_move_to_ta,
+  NULL,
   gl843_send_shading_data,
   gl843_calculate_current_setup,
   gl843_boot,

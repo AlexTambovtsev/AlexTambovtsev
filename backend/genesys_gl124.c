@@ -3981,6 +3981,7 @@ static Genesys_Command_Set gl124_cmd_set = {
 
   sanei_genesys_is_compatible_calibration,
   NULL,
+  NULL,
   gl124_send_shading_data,
   gl124_calculate_current_setup,
   gl124_boot,
